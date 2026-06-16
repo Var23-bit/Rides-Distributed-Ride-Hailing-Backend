@@ -2,12 +2,16 @@
 services:
   - type: web
     name: ride-hailing-api
-    runtime: node
+    runtime: docker
     plan: free
-    buildCommand: npm install
-    startCommand: node server.js
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /health
+    initialDeployHook: npm run db:init
     envVars:
       - key: DATABASE_URL
+        sync: false
+      - key: REDIS_URL
         sync: false
       - key: NODE_ENV
         value: production

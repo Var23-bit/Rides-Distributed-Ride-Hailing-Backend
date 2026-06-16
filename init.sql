@@ -1,5 +1,6 @@
 -- init.sql
 CREATE EXTENSION IF NOT EXISTS postgis;
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
 -- Drivers Table
 CREATE TABLE IF NOT EXISTS drivers (
