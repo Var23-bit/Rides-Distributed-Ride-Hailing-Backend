@@ -46,57 +46,7 @@ ride-hailing-backend/
 ├── .env.example
 └── README.md
 ```
-
 ---
-
-## Getting Started
-
-### Prerequisites
-
-Make sure you have the following installed:
-
-- [Docker](https://www.docker.com/)
-- [Docker Compose](https://docs.docker.com/compose/)
-- [Node.js v18+](https://nodejs.org/) (for local development without Docker)
-
-### Clone the Repository
-```bash
-git clone  https://github.com/Var23-bit/Distributed-Ride-Hailing-Backend.git
-cd ride-hailing-backend
-```
-
-### Environment Setup
-
-Copy the example env file and fill in your values:
-```bash
-cp .env.example .env
-```
-```env
-# PostgreSQL
-DB_HOST=postgres
-DB_PORT=5432
-DB_NAME=ridehailing
-DB_USER=postgres
-DB_PASSWORD=yourpassword
-
-# Redis
-REDIS_HOST=redis
-REDIS_PORT=6379
-
-# App
-PORT=3000
-JWT_SECRET=your_jwt_secret
-```
-
-### Run with Docker Compose
-```bash
-docker-compose up --build
-```
-
-This spins up all services including PostgreSQL, Redis, and each microservice. The full stack should be up in under 60 seconds.
-
----
-
 ## API Reference
 
 ### Rides
@@ -174,22 +124,3 @@ TTL:   30 seconds
 During driver matching, coordinates are read from Redis first. The primary PostgreSQL database is only hit for persistent trip and user data, keeping it performant under peak load.
 
 ---
-
-## Running Tests
-```bash
-# Run all tests
-npm test
-
-# Run tests for a specific service
-cd services/ride-service && npm test
-```
-
----
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/your-feature`)
-3. Commit your changes (`git commit -m 'Add your feature'`)
-4. Push to the branch (`git push origin feature/your-feature`)
-5. Open a Pull Request
