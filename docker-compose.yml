@@ -31,6 +31,22 @@ services:
       timeout: 3s
       retries: 5
 
+  gateway:
+    build:
+      context: .
+      dockerfile: ./services/gateway/Dockerfile
+    ports:
+      - "8080:80"
+    environment:
+      - PORT=80
+      - RIDE_SERVICE_URL=http://ride-service:3001
+      - LOCATION_SERVICE_URL=http://location-service:3002
+      - FARE_SERVICE_URL=http://fare-service:3003
+    depends_on:
+      - ride-service
+      - location-service
+      - fare-service
+
   ride-service:
     build:
       context: .

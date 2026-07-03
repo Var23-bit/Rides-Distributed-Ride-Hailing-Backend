@@ -4,7 +4,11 @@ const { createProxyMiddleware } = require('http-proxy-middleware');
 
 const app = express();
 app.use(cors());
-// express.json() removed — proxy needs the raw request stream to forward POST/PATCH bodies
+// NOTE: Do NOT add express.json() here. The gateway only proxies requests â€”
+// it never reads req.body itself. If body-parsing middleware runs before the
+// proxy, it consumes the request stream, leaving nothing for
+// http-proxy-middleware to forward, which makes every POST/PATCH request
+// hang until timeout while GET requests (no body) work fine.
 
 const RIDE_URL = process.env.RIDE_SERVICE_URL || 'http://ride-service:3001';
 const LOCATION_URL = process.env.LOCATION_SERVICE_URL || 'http://location-service:3002';

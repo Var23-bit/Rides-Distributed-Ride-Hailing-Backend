@@ -3,15 +3,15 @@ const Redis = require('ioredis');
 
 // --- Database Configuration ---
 const dbPoolUrl = process.env.DATABASE_URL || 'postgres://admin:password@localhost:5432/ridehail';
+const isLocalDb = !process.env.DATABASE_URL
+  || /@(localhost|127\.0\.0\.1|postgres)(:|\/)/.test(process.env.DATABASE_URL);
+
 const pool = new Pool({
   connectionString: dbPoolUrl,
   max: 20,
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 2000,
-  // Add SSL support for managed databases (Render/Railway require it)
-  ssl: process.env.DATABASE_URL && !process.env.DATABASE_URL.includes('localhost') 
-    ? { rejectUnauthorized: false } 
-    : false,
+  ssl: isLocalDb ? false : { rejectUnauthorized: false },
 });
 
 // A standard query wrapper
@@ -117,3 +117,4 @@ module.exports = {
   redisClient,
   eventBus
 };
+

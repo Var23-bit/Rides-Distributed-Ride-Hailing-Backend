@@ -22,13 +22,13 @@ async function updateDriverLocation(driverId, lat, lng) {
   // Update a simple set of active timestamps (for potential cleanup)
   await redisClient.zadd('driver_timestamps', Date.now(), driverId);
 
-  // 2. Async update to persistent PostGIS DB
+  // 2. Async update to persistent PostGIS DB (upsert — creates the driver row if it doesn't exist yet)
   try {
     const sql = `
-      UPDATE drivers 
-      SET current_coords = ST_SetSRID(ST_MakePoint($1, $2), 4326),
-          updated_at = CURRENT_TIMESTAMP
-      WHERE driver_id = $3
+      INSERT INTO drivers (driver_id, name, current_coords, is_available, updated_at)
+      VALUES ($3::uuid, 'Driver ' || substring($3::text from 1 for 8), ST_SetSRID(ST_MakePoint($1, $2), 4326), true, CURRENT_TIMESTAMP)
+      ON CONFLICT (driver_id)
+      DO UPDATE SET current_coords = EXCLUDED.current_coords, is_available = true, updated_at = CURRENT_TIMESTAMP
     `;
     await query(sql, [lng, lat, driverId]);
   } catch (err) {
@@ -133,3 +133,4 @@ app.get('/health', (req, res) => res.status(200).send('OK'));
 server.listen(PORT, () => {
   console.log(`Location Service listening on port ${PORT}`);
 });
+

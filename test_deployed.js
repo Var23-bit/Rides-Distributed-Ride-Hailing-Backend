@@ -1,4 +1,5 @@
 const axios = require('axios');
+axios.defaults.headers.common['Bypass-Tunnel-Reminder'] = 'true';
 
 async function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
