@@ -1,0 +1,8 @@
+#! 0-ride-hailing-backend-namespace.yaml
+# Generated code, do not edit
+apiVersion: v1
+kind: Namespace
+metadata:
+    name: ride-hailing-backend
+    labels:
+        com.docker.compose.project: ride-hailing-backend

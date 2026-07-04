@@ -1,0 +1,19 @@
+#! ride-service-service.yaml
+# Generated code, do not edit
+apiVersion: v1
+kind: Service
+metadata:
+    name: ride-service-published
+    namespace: ride-hailing-backend
+    labels:
+        com.docker.compose.project: ride-hailing-backend
+        com.docker.compose.service: ride-service
+spec:
+    selector:
+        com.docker.compose.project: ride-hailing-backend
+        com.docker.compose.service: ride-service
+    ports:
+        - name: ride-servi-3001
+          port: 3001
+          protocol: TCP
+          targetPort: ride-servi-3001

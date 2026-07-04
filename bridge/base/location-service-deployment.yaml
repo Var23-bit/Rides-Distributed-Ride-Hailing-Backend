@@ -1,0 +1,39 @@
+#! location-service-deployment.yaml
+# Generated code, do not edit
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+    name: location-service
+    namespace: ride-hailing-backend
+    labels:
+        com.docker.compose.project: ride-hailing-backend
+        com.docker.compose.service: location-service
+spec:
+    replicas: 1
+    selector:
+        matchLabels:
+            com.docker.compose.project: ride-hailing-backend
+            com.docker.compose.service: location-service
+    strategy:
+        type: Recreate
+    template:
+        metadata:
+            labels:
+                com.docker.compose.project: ride-hailing-backend
+                com.docker.compose.service: location-service
+                com.docker.compose.network.default: "true"
+        spec:
+            containers:
+                - name: location-service
+                  image: ride-hailing-backend-location-service
+                  imagePullPolicy: IfNotPresent
+                  env:
+                    - name: DATABASE_URL
+                      value: "postgres://admin:password@postgres:5432/ridehail"
+                    - name: PORT
+                      value: "3002"
+                    - name: REDIS_URL
+                      value: "redis://redis:6379"
+                  ports:
+                    - name: location-s-3002
+                      containerPort: 3002

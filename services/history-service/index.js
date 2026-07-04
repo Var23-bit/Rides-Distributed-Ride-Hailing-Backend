@@ -1,4 +1,4 @@
-const { query, eventBus } = require('shared');
+const { query, eventBus } = require('../../shared');
 
 const STREAM_NAME = 'trip_events';
 const GROUP_NAME = 'history_service_group';
@@ -10,17 +10,18 @@ async function processEvent(event) {
 
   try {
     console.log(`[History Service] Logging Event: ${eventType} for Trip: ${tripId}`);
-    
-    // Insert into events_log table
+
     const sql = `
       INSERT INTO events_log (trip_id, event_type, payload)
       VALUES ($1, $2, $3)
     `;
     await query(sql, [tripId, eventType, payload]);
-    
   } catch (err) {
     console.error(`[History Service] Failed to log event ${eventType}`, err);
-    throw err; // Re-throw to prevent ack if storing fails
+    await query(`
+      INSERT INTO failed_events (event_type, payload, error_message, created_at)
+      VALUES ($1, $2, $3, CURRENT_TIMESTAMP)
+    `, [eventType, payload, err.message]);
   }
 }
 

@@ -1,4 +1,4 @@
-const { eventBus } = require('shared');
+const { query, eventBus } = require('../../shared');
 
 const STREAM_NAME = 'trip_events';
 const GROUP_NAME = 'payment_service_group';
@@ -8,16 +8,34 @@ async function processPayment(event) {
   if (event.eventType === 'TRIP_ENDED') {
     const trip = event.payload;
     const { tripId, riderId, fare } = trip;
-    
-    console.log(`[Payment Service] Processing payment for Trip: ${tripId}`);
-    console.log(`[Payment Service] Charging Rider: ${riderId} amount: $${fare}`);
-    
-    // Simulate payment processing delay (e.g., calling Stripe)
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    console.log(`[Payment Service] Payment successful for Trip: ${tripId}. Amount: $${fare}`);
-    
-    // In a real system we would update a `payments` table here
+
+    try {
+      console.log(`[Payment Service] Processing payment for Trip: ${tripId}`);
+
+      const paymentStatus = fare ? 'succeeded' : 'failed';
+      await query(`
+        INSERT INTO payments (trip_id, rider_id, amount, status, created_at)
+        VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP)
+      `, [tripId, riderId, fare || 0, paymentStatus]);
+
+      if (paymentStatus === 'succeeded') {
+        console.log(`[Payment Service] Charging Rider: ${riderId} amount: $${fare}`);
+        console.log(`[Payment Service] Payment successful for Trip: ${tripId}. Amount: $${fare}`);
+        await eventBus.publish('trip_events', 'PAYMENT_SUCCEEDED', { tripId, riderId, amount: fare });
+      } else {
+        await query(`
+          INSERT INTO failed_events (event_type, payload, error_message, created_at)
+          VALUES ($1, $2, $3, CURRENT_TIMESTAMP)
+        `, ['TRIP_ENDED', trip, 'Missing fare for payment']);
+        await eventBus.publish('trip_events', 'PAYMENT_FAILED', { tripId, riderId, reason: 'Missing fare' });
+      }
+    } catch (error) {
+      await query(`
+        INSERT INTO failed_events (event_type, payload, error_message, created_at)
+        VALUES ($1, $2, $3, CURRENT_TIMESTAMP)
+      `, ['TRIP_ENDED', trip, error.message]);
+      console.error(`[Payment Service] Failed to process payment for ${tripId}`, error.message);
+    }
   }
 }
 

@@ -1,9 +1,18 @@
 const express = require('express');
 const cors = require('cors');
+const { rideRequestSchema } = require('../../shared/validation');
 
 const app = express();
+const metrics = { requests: 0, errors: 0 };
 app.use(cors());
 app.use(express.json());
+app.use((req, res, next) => {
+  metrics.requests += 1;
+  res.on('finish', () => {
+    if (res.statusCode >= 400) metrics.errors += 1;
+  });
+  next();
+});
 
 const PORT = process.env.PORT || 3003;
 
@@ -33,11 +42,12 @@ function deg2rad(deg) {
 }
 
 app.post('/fares/estimate', (req, res) => {
-  const { pickup, dropoff } = req.body;
-
-  if (!pickup || !dropoff) {
-    return res.status(400).json({ error: 'Missing pickup or dropoff logic' });
+  const parsed = rideRequestSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ error: parsed.error.issues[0].message });
   }
+
+  const { pickup, dropoff } = parsed.data;
 
   try {
     const distKm = getDistanceFromLatLonInKm(pickup.lat, pickup.lng, dropoff.lat, dropoff.lng);
@@ -61,6 +71,7 @@ app.post('/fares/estimate', (req, res) => {
 });
 
 app.get('/health', (req, res) => res.status(200).send('OK'));
+app.get('/metrics', (req, res) => res.status(200).json(metrics));
 
 app.listen(PORT, () => {
   console.log(`Fare Service listening on port ${PORT}`);

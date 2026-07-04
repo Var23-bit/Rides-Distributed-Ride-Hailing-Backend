@@ -1,0 +1,29 @@
+#! kustomization.yaml
+# Generated code, do not edit
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+    - 0-ride-hailing-backend-namespace.yaml
+    - default-network-policy.yaml
+    - fare-service-deployment.yaml
+    - fare-service-expose.yaml
+    - fare-service-service.yaml
+    - gateway-deployment.yaml
+    - gateway-expose.yaml
+    - gateway-service.yaml
+    - history-service-deployment.yaml
+    - location-service-deployment.yaml
+    - location-service-expose.yaml
+    - location-service-service.yaml
+    - payment-service-deployment.yaml
+    - postgres-deployment.yaml
+    - postgres-expose.yaml
+    - postgres-postgres-data-persistentVolumeClaim.yaml
+    - postgres-service.yaml
+    - redis-deployment.yaml
+    - redis-expose.yaml
+    - redis-redis-data-persistentVolumeClaim.yaml
+    - redis-service.yaml
+    - ride-service-deployment.yaml
+    - ride-service-expose.yaml
+    - ride-service-service.yaml

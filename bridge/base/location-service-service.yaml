@@ -1,0 +1,21 @@
+#! location-service-service.yaml
+# Generated code, do not edit
+apiVersion: v1
+kind: Service
+metadata:
+    name: location-service-published
+    namespace: ride-hailing-backend
+    labels:
+        com.docker.compose.project: ride-hailing-backend
+        com.docker.compose.service: location-service
+spec:
+    selector:
+        com.docker.compose.project: ride-hailing-backend
+        com.docker.compose.service: location-service
+    ports:
+        - name: location-s-3002
+          port: 3002
+          protocol: TCP
+          targetPort: location-s-3002
+
+# check if there is at least one published port

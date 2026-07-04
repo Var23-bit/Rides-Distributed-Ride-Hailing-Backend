@@ -1,0 +1,34 @@
+#! payment-service-deployment.yaml
+# Generated code, do not edit
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+    name: payment-service
+    namespace: ride-hailing-backend
+    labels:
+        com.docker.compose.project: ride-hailing-backend
+        com.docker.compose.service: payment-service
+spec:
+    replicas: 1
+    selector:
+        matchLabels:
+            com.docker.compose.project: ride-hailing-backend
+            com.docker.compose.service: payment-service
+    strategy:
+        type: Recreate
+    template:
+        metadata:
+            labels:
+                com.docker.compose.project: ride-hailing-backend
+                com.docker.compose.service: payment-service
+                com.docker.compose.network.default: "true"
+        spec:
+            containers:
+                - name: payment-service
+                  image: ride-hailing-backend-payment-service
+                  imagePullPolicy: IfNotPresent
+                  env:
+                    - name: DATABASE_URL
+                      value: "postgres://admin:password@postgres:5432/ridehail"
+                    - name: REDIS_URL
+                      value: "redis://redis:6379"

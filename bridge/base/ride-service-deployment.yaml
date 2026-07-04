@@ -1,0 +1,43 @@
+#! ride-service-deployment.yaml
+# Generated code, do not edit
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+    name: ride-service
+    namespace: ride-hailing-backend
+    labels:
+        com.docker.compose.project: ride-hailing-backend
+        com.docker.compose.service: ride-service
+spec:
+    replicas: 1
+    selector:
+        matchLabels:
+            com.docker.compose.project: ride-hailing-backend
+            com.docker.compose.service: ride-service
+    strategy:
+        type: Recreate
+    template:
+        metadata:
+            labels:
+                com.docker.compose.project: ride-hailing-backend
+                com.docker.compose.service: ride-service
+                com.docker.compose.network.default: "true"
+        spec:
+            containers:
+                - name: ride-service
+                  image: ride-hailing-backend-ride-service
+                  imagePullPolicy: IfNotPresent
+                  env:
+                    - name: DATABASE_URL
+                      value: "postgres://admin:password@postgres:5432/ridehail"
+                    - name: FARE_SERVICE_URL
+                      value: "http://fare-service:3003"
+                    - name: LOCATION_SERVICE_URL
+                      value: "http://location-service:3002"
+                    - name: PORT
+                      value: "3001"
+                    - name: REDIS_URL
+                      value: "redis://redis:6379"
+                  ports:
+                    - name: ride-servi-3001
+                      containerPort: 3001

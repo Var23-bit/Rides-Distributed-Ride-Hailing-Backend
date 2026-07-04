@@ -29,18 +29,90 @@ const pool = new Pool({
     : false,
 });
 
+const isDatabaseUnavailableError = (error) => {
+  const message = error?.message || '';
+  const code = error?.code || error?.cause?.code || '';
+  return error instanceof AggregateError
+    || code === 'ECONNREFUSED'
+    || code === 'ETIMEDOUT'
+    || /ECONNREFUSED|ETIMEDOUT|timeout|connect|terminated|refused/i.test(message);
+};
+
 const query = async (text, params) => {
-  const res = await pool.query(text, params);
-  return res;
+  try {
+    return await pool.query(text, params);
+  } catch (error) {
+    if (isDatabaseUnavailableError(error)) {
+      const unavailableError = new Error('Database unavailable');
+      unavailableError.code = 'DB_UNAVAILABLE';
+      throw unavailableError;
+    }
+    throw error;
+  }
 };
 
 // ── Redis (Optional) ──
 let redisClient = null;
 let redisReady = false;
 
+function createMemoryRedisClient() {
+  const geoStore = new Map();
+  const timestamps = new Map();
+
+  const distanceInKm = (lng1, lat1, lng2, lat2) => {
+    const toRad = (value) => (value * Math.PI) / 180;
+    const R = 6371;
+    const dLat = toRad(lat2 - lat1);
+    const dLon = toRad(lng2 - lng1);
+    const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  };
+
+  return {
+    on() { return this; },
+    async geoadd(key, lng, lat, member) {
+      const current = geoStore.get(key) || new Map();
+      current.set(member, { lng, lat });
+      geoStore.set(key, current);
+      return 1;
+    },
+    async zadd(key, score, member) {
+      const current = timestamps.get(key) || new Map();
+      current.set(member, score);
+      timestamps.set(key, current);
+      return 1;
+    },
+    async zscore(key, member) {
+      return timestamps.get(key)?.get(member) ?? null;
+    },
+    async zrem(key, member) {
+      const current = timestamps.get(key);
+      if (current) {
+        current.delete(member);
+        if (current.size === 0) timestamps.delete(key);
+      }
+      return 1;
+    },
+    async geosearch(key, ...args) {
+      const current = geoStore.get(key);
+      if (!current) return [];
+      const [, lng, lat] = args;
+      return Array.from(current.entries())
+        .map(([member, coords]) => [member, distanceInKm(lng, lat, coords.lng, coords.lat).toFixed(2)])
+        .sort((a, b) => parseFloat(a[1]) - parseFloat(b[1]));
+    },
+    async xadd() { return '1-0'; },
+    async xgroup() { return 'OK'; },
+    async xreadgroup() { return []; },
+    async xack() { return 1; },
+  };
+}
+
 async function initRedis() {
   if (!process.env.REDIS_URL) {
-    console.log('[Redis] No REDIS_URL set — running without Redis. Location tracking & event bus disabled.');
+    redisClient = createMemoryRedisClient();
+    redisReady = true;
+    console.log('[Redis] No REDIS_URL set — using in-memory Redis fallback.');
     return;
   }
   try {
@@ -188,6 +260,9 @@ app.post('/rides/request', async (req, res) => {
       RETURNING trip_id, status, created_at
     `;
     const result = await query(sql, [riderId, selectedDriver, pickup.lng, pickup.lat, dropoff.lng, dropoff.lat]);
+    if (!result.rows || result.rows.length === 0) {
+      return res.status(503).json({ error: 'Ride service temporarily unavailable' });
+    }
     const trip = result.rows[0];
 
     // Publish event (no-op if no Redis)
@@ -203,7 +278,10 @@ app.post('/rides/request', async (req, res) => {
       fareEstimate
     });
   } catch (err) {
-    console.error('Error creating ride request:', err.message);
+    console.error('Error creating ride request:', err.message || err.cause?.message || 'Unknown error');
+    if (err && (err.code === 'DB_UNAVAILABLE' || isDatabaseUnavailableError(err))) {
+      return res.status(503).json({ error: 'Ride service temporarily unavailable' });
+    }
     res.status(500).json({ error: 'Internal server error while requesting ride' });
   }
 });
