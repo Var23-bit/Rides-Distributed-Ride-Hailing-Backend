@@ -10,7 +10,7 @@ app.use(express.json());
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL || 'postgres://admin:password@localhost:5432/ridehail',
-  ssl: process.env.DATABASE_URL && !process.env.DATABASE_URL.includes('localhost') ? { rejectUnauthorized: false } : false,
+  ssl: false,
 });
 
 const registerSchema = z.object({
@@ -135,6 +135,7 @@ app.post('/auth/logout', async (req, res) => {
   } catch (error) {
     res.status(500).json({ error: 'Logout failed' });
   }
+  
 });
 
 app.get('/health', (req, res) => res.status(200).send('OK'));

@@ -4,11 +4,11 @@ WORKDIR /app
 COPY shared /shared
 
 WORKDIR /app/service
-COPY services/gateway/package*.json ./
+COPY services/auth-service/package*.json ./
 RUN npm install --prefix /shared && npm install
 
-COPY services/gateway/ ./
+COPY services/auth-service/ ./
 
-EXPOSE 80
+EXPOSE 3010
 
 CMD ["npm", "start"]

@@ -320,18 +320,18 @@ app.patch('/rides/:id/status', async (req, res) => {
       }
     }
 
-    let sql = `UPDATE trips SET status = $1, updated_at = CURRENT_TIMESTAMP`;
-    const params = [status];
+  let sql = `UPDATE trips SET status = $1, updated_at = CURRENT_TIMESTAMP`;
+const params = [status];
 
-    if (finalFare !== null) {
-      sql += `, fare = $2`;
-      params.push(finalFare);
-      sql += ` WHERE trip_id = $` + params.length;
-      params.push(tripId);
-    } else {
-      sql += ` WHERE trip_id = $2`;
-      params.push(tripId);
-    }
+if (finalFare !== null) {
+  sql += `, fare = $2`;
+  params.push(finalFare);
+  params.push(tripId);
+  sql += ` WHERE trip_id = $${params.length}`;
+} else {
+  sql += ` WHERE trip_id = $2`;
+  params.push(tripId);
+}
 
     sql += ` RETURNING *`;
 

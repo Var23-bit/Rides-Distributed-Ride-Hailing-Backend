@@ -4,7 +4,10 @@
   "description": "Shared code for db, redis and eventbus",
   "main": "index.js",
   "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "jsonwebtoken": "^9.0.2",
     "ioredis": "^5.3.2",
-    "pg": "^8.11.3"
+    "pg": "^8.11.3",
+    "zod": "^4.4.3"
   }
 }

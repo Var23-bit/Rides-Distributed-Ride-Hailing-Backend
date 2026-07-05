@@ -1,12 +1,11 @@
 const express = require('express');
 const cors = require('cors');
-const jwt = require('jsonwebtoken');
+const { verifyAccessToken } = require('/shared/auth');
 const rateLimit = require('express-rate-limit');
 const { createProxyMiddleware } = require('http-proxy-middleware');
 
 const app = express();
 app.use(cors());
-app.use(express.json());
 
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -25,7 +24,7 @@ const generalLimiter = rateLimit({
 const RIDE_URL = process.env.RIDE_SERVICE_URL || 'http://ride-service:3001';
 const LOCATION_URL = process.env.LOCATION_SERVICE_URL || 'http://location-service:3002';
 const FARE_URL = process.env.FARE_SERVICE_URL || 'http://fare-service:3003';
-const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-me';
+
 
 function requireAuth(req, res, next) {
   if (req.path.startsWith('/auth') || req.path === '/health') {
@@ -39,7 +38,7 @@ function requireAuth(req, res, next) {
   }
 
   try {
-    const payload = jwt.verify(token, JWT_SECRET);
+    const payload = verifyAccessToken(token);
     req.headers['x-user-id'] = payload.sub;
     req.headers['x-user-role'] = payload.role;
     next();

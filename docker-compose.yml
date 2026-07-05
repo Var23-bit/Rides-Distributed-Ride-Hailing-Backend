@@ -8,7 +8,7 @@ services:
       POSTGRES_PASSWORD: password
       POSTGRES_DB: ridehail
     ports:
-      - "5432:5432"
+      - "5434:5432"
     volumes:
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
       - postgres_data:/var/lib/postgresql/data
@@ -20,8 +20,6 @@ services:
 
   redis:
     image: redis:7-alpine
-    ports:
-      - "6379:6379"
     volumes:
       - redis_data:/data
     command: redis-server --appendonly yes
@@ -31,18 +29,37 @@ services:
       timeout: 3s
       retries: 5
 
+  auth-service:
+    build:
+      context: .
+      dockerfile: ./services/auth-service/Dockerfile
+    environment:
+      - PORT=3010
+      - DATABASE_URL=postgres://admin:password@postgres:5432/ridehail
+      - REDIS_URL=redis://redis:6379
+      - JWT_SECRET=local-dev-secret-change-me
+      - ACCESS_TOKEN_TTL=15m
+      - REFRESH_TOKEN_TTL=30d
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
   gateway:
     build:
       context: .
       dockerfile: ./services/gateway/Dockerfile
     ports:
-      - "8080:80"
+      - "8081:80"
     environment:
       - PORT=80
       - RIDE_SERVICE_URL=http://ride-service:3001
       - LOCATION_SERVICE_URL=http://location-service:3002
       - FARE_SERVICE_URL=http://fare-service:3003
+      - JWT_SECRET=local-dev-secret-change-me
     depends_on:
+      - auth-service
       - ride-service
       - location-service
       - fare-service
@@ -51,14 +68,13 @@ services:
     build:
       context: .
       dockerfile: ./services/ride-service/Dockerfile
-    ports:
-      - "3001:3001"
     environment:
       - PORT=3001
       - DATABASE_URL=postgres://admin:password@postgres:5432/ridehail
       - REDIS_URL=redis://redis:6379
       - LOCATION_SERVICE_URL=http://location-service:3002
       - FARE_SERVICE_URL=http://fare-service:3003
+      - JWT_SECRET=local-dev-secret-change-me
     depends_on:
       postgres:
         condition: service_healthy
@@ -69,12 +85,11 @@ services:
     build:
       context: .
       dockerfile: ./services/location-service/Dockerfile
-    ports:
-      - "3002:3002"
     environment:
       - PORT=3002
       - DATABASE_URL=postgres://admin:password@postgres:5432/ridehail
       - REDIS_URL=redis://redis:6379
+      - JWT_SECRET=local-dev-secret-change-me
     depends_on:
       postgres:
         condition: service_healthy
@@ -85,11 +100,10 @@ services:
     build:
       context: .
       dockerfile: ./services/fare-service/Dockerfile
-    ports:
-      - "3003:3003"
     environment:
       - PORT=3003
       - DATABASE_URL=postgres://admin:password@postgres:5432/ridehail
+      - JWT_SECRET=local-dev-secret-change-me
     depends_on:
       postgres:
         condition: service_healthy
@@ -101,6 +115,7 @@ services:
     environment:
       - DATABASE_URL=postgres://admin:password@postgres:5432/ridehail
       - REDIS_URL=redis://redis:6379
+      - JWT_SECRET=local-dev-secret-change-me
     depends_on:
       postgres:
         condition: service_healthy
@@ -114,6 +129,7 @@ services:
     environment:
       - DATABASE_URL=postgres://admin:password@postgres:5432/ridehail
       - REDIS_URL=redis://redis:6379
+      - JWT_SECRET=local-dev-secret-change-me
     depends_on:
       postgres:
         condition: service_healthy
