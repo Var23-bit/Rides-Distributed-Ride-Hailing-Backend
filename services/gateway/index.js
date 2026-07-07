@@ -24,10 +24,11 @@ const generalLimiter = rateLimit({
 const RIDE_URL = process.env.RIDE_SERVICE_URL || 'http://ride-service:3001';
 const LOCATION_URL = process.env.LOCATION_SERVICE_URL || 'http://location-service:3002';
 const FARE_URL = process.env.FARE_SERVICE_URL || 'http://fare-service:3003';
+const PAYMENT_URL = process.env.PAYMENT_SERVICE_URL || 'http://payment-service:3008';
 
 
 function requireAuth(req, res, next) {
-  if (req.path.startsWith('/auth') || req.path === '/health') {
+  if (req.path.startsWith('/auth') || req.path === '/health' || req.path === '/payments/webhook') {
     return next();
   }
 
@@ -66,6 +67,7 @@ app.use('/rides', makeProxy(RIDE_URL));
 app.use('/health', makeProxy(RIDE_URL));
 app.use('/drivers', makeProxy(LOCATION_URL));
 app.use('/fares', makeProxy(FARE_URL));
+app.use('/payments', makeProxy(PAYMENT_URL));
 app.use('/auth', makeProxy('http://auth-service:3010'));
 
 app.get('/', (req, res) => {

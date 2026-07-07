@@ -36,14 +36,11 @@ services:
     environment:
       - PORT=3010
       - DATABASE_URL=postgres://admin:password@postgres:5432/ridehail
-      - REDIS_URL=redis://redis:6379
       - JWT_SECRET=local-dev-secret-change-me
       - ACCESS_TOKEN_TTL=15m
       - REFRESH_TOKEN_TTL=30d
     depends_on:
       postgres:
-        condition: service_healthy
-      redis:
         condition: service_healthy
 
   gateway:
@@ -57,12 +54,14 @@ services:
       - RIDE_SERVICE_URL=http://ride-service:3001
       - LOCATION_SERVICE_URL=http://location-service:3002
       - FARE_SERVICE_URL=http://fare-service:3003
+      - PAYMENT_SERVICE_URL=http://payment-service:3008
       - JWT_SECRET=local-dev-secret-change-me
     depends_on:
       - auth-service
       - ride-service
       - location-service
       - fare-service
+      - payment-service
 
   ride-service:
     build:
@@ -113,9 +112,13 @@ services:
       context: .
       dockerfile: ./services/payment-service/Dockerfile
     environment:
+      - PORT=3008
       - DATABASE_URL=postgres://admin:password@postgres:5432/ridehail
       - REDIS_URL=redis://redis:6379
       - JWT_SECRET=local-dev-secret-change-me
+      - RAZORPAY_KEY_ID=rzp_test_T9mKmJmtAdPYIy
+      - RAZORPAY_KEY_SECRET=dRGlpQUZjyhCw225pZ053iGH
+      - RAZORPAY_WEBHOOK_SECRET=REPLACE_ME
     depends_on:
       postgres:
         condition: service_healthy

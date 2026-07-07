@@ -1,12 +1,17 @@
 {
   "name": "payment-service",
   "version": "1.0.0",
-  "description": "Consumes trip_ended events and processes simulated payments",
+  "description": "Handles Razorpay payment orders, verification, and webhooks for completed trips",
   "main": "index.js",
   "scripts": {
     "start": "node index.js"
   },
   "dependencies": {
-    "shared": "file:../../shared"
+    "shared": "file:../../shared",
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "razorpay": "^2.9.4",
+    "zod": "^3.22.0"
   }
 }
+
